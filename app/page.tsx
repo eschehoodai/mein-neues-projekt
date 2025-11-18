@@ -39,21 +39,21 @@ export default function Home() {
     }
   }, [isAdmin]);
 
-  const loadProfiles = () => {
-    if (typeof window !== 'undefined') {
-      // Lade userProfiles aus LocalStorage
-      const savedProfiles = localStorage.getItem('userProfiles');
-      if (savedProfiles) {
-        try {
-          const parsedProfiles: UserProfile[] = JSON.parse(savedProfiles);
-          setProfiles(parsedProfiles);
-        } catch (error) {
-          console.error('Fehler beim Laden der Profile:', error);
-          setProfiles([]);
-        }
-      } else {
+  const loadProfiles = async () => {
+    try {
+      const response = await fetch('/api/profiles');
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Fehler beim Laden der Profile:', data.error);
         setProfiles([]);
+        return;
       }
+
+      setProfiles(data.profiles || []);
+    } catch (error) {
+      console.error('Fehler beim Laden der Profile:', error);
+      setProfiles([]);
     }
   };
 
@@ -118,25 +118,52 @@ export default function Home() {
     }
   };
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     if (!editedProfile) return;
 
-    // Aktualisiere das Profil in der Liste
-    const updatedProfiles = profiles.map(p => 
-      p.id === editedProfile.id ? editedProfile : p
-    );
-    setProfiles(updatedProfiles);
+    try {
+      const response = await fetch('/api/profiles', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: editedProfile.id,
+          userId: (editedProfile as any).userId,
+          name: editedProfile.name,
+          age: editedProfile.age,
+          location: editedProfile.location,
+          status: editedProfile.status,
+          interests: editedProfile.interests,
+          height: editedProfile.height,
+          children: editedProfile.children,
+          education: editedProfile.education,
+          languages: editedProfile.languages,
+          description: editedProfile.description,
+          avatar: editedProfile.avatar,
+          online: editedProfile.online,
+          verified: editedProfile.verified,
+          seeking: editedProfile.seeking,
+        }),
+      });
 
-    // Speichere alle Profile in localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('userProfiles', JSON.stringify(updatedProfiles));
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Fehler beim Speichern:', data.error);
+        alert(`Fehler beim Speichern: ${data.error}`);
+        return;
+      }
+
+      setEditingProfile(null);
+      setEditedProfile(null);
+      
+      // Lade Profile neu
+      await loadProfiles();
+    } catch (error) {
+      console.error('Fehler beim Speichern des Profils:', error);
+      alert('Fehler beim Speichern des Profils.');
     }
-
-    setEditingProfile(null);
-    setEditedProfile(null);
-    
-    // Lade Profile neu, um sicherzustellen, dass alles synchronisiert ist
-    loadProfiles();
   };
 
   return (

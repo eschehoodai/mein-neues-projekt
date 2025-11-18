@@ -40,16 +40,27 @@ export default function MeinProfil() {
     loadProfile();
   }, [user, isAuthenticated]);
 
-  const loadProfile = () => {
-    if (!user || typeof window === 'undefined') return;
+  const loadProfile = async () => {
+    if (!user) return;
 
-    const userProfiles = JSON.parse(localStorage.getItem('userProfiles') || '[]');
-    const userProfile = userProfiles.find((p: UserProfile) => p.userId === user.id);
+    try {
+      const response = await fetch(`/api/profiles/${user.id}`);
+      const data = await response.json();
 
-    if (userProfile) {
-      setProfile(userProfile);
-      setHasProfile(true);
-    } else {
+      if (!response.ok) {
+        console.error('Fehler beim Laden des Profils:', data.error);
+        setHasProfile(false);
+        return;
+      }
+
+      if (data.profile) {
+        setProfile(data.profile);
+        setHasProfile(true);
+      } else {
+        setHasProfile(false);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden des Profils:', error);
       setHasProfile(false);
     }
   };

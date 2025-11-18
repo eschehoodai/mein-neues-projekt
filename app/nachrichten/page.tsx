@@ -48,12 +48,15 @@ export default function NachrichtenPage() {
     const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
     
     // Lade alle Profile für Avatare
-    const savedUserProfiles = localStorage.getItem('userProfiles');
     let allProfiles: (UserProfile & { userId?: string })[] = [];
-    if (savedUserProfiles) {
-      try {
-        allProfiles = [...JSON.parse(savedUserProfiles)];
-      } catch (e) {}
+    try {
+      const profilesResponse = await fetch('/api/profiles');
+      const profilesData = await profilesResponse.json();
+      if (profilesResponse.ok && profilesData.profiles) {
+        allProfiles = profilesData.profiles;
+      }
+    } catch (e) {
+      console.error('Fehler beim Laden der Profile:', e);
     }
 
     // Lade alle Nachrichten

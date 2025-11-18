@@ -31,40 +31,37 @@ export default function Profil() {
   const [userProfileId, setUserProfileId] = useState<number | null>(null);
 
   useEffect(() => {
-    // Lade Profile aus LocalStorage
-    if (typeof window !== 'undefined') {
-      // Lade userProfiles aus LocalStorage
-      const savedProfiles = localStorage.getItem('userProfiles');
-      if (savedProfiles) {
-        try {
-          const parsedProfiles: (UserProfile & { userId?: string })[] = JSON.parse(savedProfiles);
-          setProfiles(parsedProfiles);
-          
-          // Finde das Profil des eingeloggten Users
-          // Prüfe auch nach Profilen, die möglicherweise zu Sample User Accounts gehören
-          if (user) {
-            const ownProfile = parsedProfiles.find((p: UserProfile & { userId?: string }) => {
-              // Direkte Verknüpfung
-              if (p.userId === user.id) return true;
-              // Für Sample User: Prüfe ob User-ID mit Profil-ID übereinstimmt (sample-1 -> Profil ID 1)
-              if (user.id.startsWith('sample-')) {
-                const sampleId = parseInt(user.id.replace('sample-', ''));
-                return p.id === sampleId;
-              }
-              return false;
-            });
-            if (ownProfile) {
-              setUserProfileId(ownProfile.id);
-            }
-          }
-        } catch (error) {
-          console.error('Fehler beim Laden der Profile:', error);
+    // Lade Profile aus der Datenbank
+    const loadProfiles = async () => {
+      try {
+        const response = await fetch('/api/profiles');
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error('Fehler beim Laden der Profile:', data.error);
           setProfiles([]);
+          return;
         }
-      } else {
+
+        const parsedProfiles: (UserProfile & { userId?: string })[] = data.profiles || [];
+        setProfiles(parsedProfiles);
+        
+        // Finde das Profil des eingeloggten Users
+        if (user) {
+          const ownProfile = parsedProfiles.find((p: UserProfile & { userId?: string }) => {
+            return p.userId === user.id;
+          });
+          if (ownProfile) {
+            setUserProfileId(ownProfile.id);
+          }
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden der Profile:', error);
         setProfiles([]);
       }
-    }
+    };
+
+    loadProfiles();
   }, [user]);
 
   const togglePlay = () => {

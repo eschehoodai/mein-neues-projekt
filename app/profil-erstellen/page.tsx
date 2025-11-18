@@ -48,29 +48,37 @@ export default function ProfilErstellen() {
   });
 
   useEffect(() => {
-    if (user && typeof window !== 'undefined') {
-      // Lade bestehendes Profil, falls vorhanden
-      const existingProfiles = JSON.parse(localStorage.getItem('userProfiles') || '[]');
-      const existingProfile = existingProfiles.find((p: UserProfile & { userId?: string }) => p.userId === user.id);
-      
-      if (existingProfile) {
-        setFormData({
-          name: existingProfile.name,
-          age: existingProfile.age,
-          location: existingProfile.location,
-          status: existingProfile.status,
-          interests: existingProfile.interests,
-          height: existingProfile.height,
-          children: existingProfile.children,
-          education: existingProfile.education,
-          languages: existingProfile.languages,
-          description: existingProfile.description,
-          avatar: existingProfile.avatar,
-          online: existingProfile.online,
-          seeking: existingProfile.seeking,
-        });
+    const loadExistingProfile = async () => {
+      if (!user) return;
+
+      try {
+        const response = await fetch(`/api/profiles/${user.id}`);
+        const data = await response.json();
+
+        if (response.ok && data.profile) {
+          const existingProfile = data.profile;
+          setFormData({
+            name: existingProfile.name,
+            age: existingProfile.age,
+            location: existingProfile.location,
+            status: existingProfile.status,
+            interests: existingProfile.interests || [],
+            height: existingProfile.height,
+            children: existingProfile.children,
+            education: existingProfile.education,
+            languages: existingProfile.languages || [],
+            description: existingProfile.description,
+            avatar: existingProfile.avatar,
+            online: existingProfile.online,
+            seeking: existingProfile.seeking,
+          });
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden des bestehenden Profils:', error);
       }
-    }
+    };
+
+    loadExistingProfile();
   }, [user]);
 
   const togglePlay = () => {
@@ -118,52 +126,63 @@ export default function ProfilErstellen() {
     });
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
     if (!user) return;
     
-    // Lade bestehende Profile aus LocalStorage
-    const existingProfiles = typeof window !== 'undefined' 
-      ? JSON.parse(localStorage.getItem('userProfiles') || '[]') 
-      : [];
-    
-    // Prüfe ob User bereits ein Profil hat
-    const existingProfileIndex = existingProfiles.findIndex((p: UserProfile & { userId?: string }) => p.userId === user.id);
-    
-    let updatedProfiles;
-    if (existingProfileIndex >= 0) {
-      // Aktualisiere bestehendes Profil
-      updatedProfiles = [...existingProfiles];
-      updatedProfiles[existingProfileIndex] = {
-        ...formData,
-        id: existingProfiles[existingProfileIndex].id,
-        verified: existingProfiles[existingProfileIndex].verified,
-        userId: user.id,
-      };
-    } else {
-      // Erstelle neues Profil
-      const newId = existingProfiles.length > 0 
-        ? Math.max(...existingProfiles.map((p: UserProfile) => p.id)) + 1 
-        : Date.now();
+    try {
+      // Prüfe ob User bereits ein Profil hat
+      const checkResponse = await fetch(`/api/profiles/${user.id}`);
+      const checkData = await checkResponse.json();
+      const existingProfile = checkData.profile;
+
+      let response;
+      if (existingProfile) {
+        // Aktualisiere bestehendes Profil
+        response = await fetch('/api/profiles', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: existingProfile.id,
+            userId: user.id,
+            ...formData,
+            verified: existingProfile.verified, // Behalte verified Status
+          }),
+        });
+      } else {
+        // Erstelle neues Profil
+        response = await fetch('/api/profiles', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            ...formData,
+            verified: false,
+          }),
+        });
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Fehler beim Speichern des Profils:', data.error);
+        alert(`Fehler: ${data.error}`);
+        return;
+      }
+
+      console.log('Profil erfolgreich gespeichert:', data.profile);
       
-      const newProfile: UserProfile & { userId: string } = {
-        ...formData,
-        id: newId,
-        verified: false,
-        userId: user.id,
-      };
-      
-      updatedProfiles = [...existingProfiles, newProfile];
+      // Weiterleitung zur "Mein Profil" Seite
+      router.push('/mein-profil');
+    } catch (error) {
+      console.error('Fehler beim Speichern des Profils:', error);
+      alert('Fehler beim Speichern des Profils. Bitte versuche es erneut.');
     }
-    
-    // Speichere in LocalStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('userProfiles', JSON.stringify(updatedProfiles));
-    }
-    
-    // Weiterleitung zur "Mein Profil" Seite
-    router.push('/mein-profil');
   };
 
   return (

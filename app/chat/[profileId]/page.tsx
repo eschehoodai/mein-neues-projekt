@@ -67,22 +67,18 @@ export default function ChatPage() {
       setChatPartnerName(partnerUser.name);
       
       // Lade Profil des Partners, um Avatar zu finden
-      const savedUserProfiles = localStorage.getItem('userProfiles');
-      if (savedUserProfiles) {
-        try {
-          const allProfiles: (UserProfile & { userId?: string })[] = JSON.parse(savedUserProfiles);
-          const partnerProfile = allProfiles.find((p: UserProfile & { userId?: string }) => p.userId === partnerUserId);
-          if (partnerProfile) {
-            setChatPartnerAvatar(partnerProfile.avatar);
-            setChatPartner(partnerProfile);
-          } else {
-            // Fallback: Verwende Placeholder-Avatar
-            setChatPartnerAvatar(`https://via.placeholder.com/150/4F46E5/FFFFFF?text=${partnerUser.name.charAt(0)}`);
-          }
-        } catch (e) {
+      try {
+        const profileResponse = await fetch(`/api/profiles/${partnerUserId}`);
+        const profileData = await profileResponse.json();
+        if (profileResponse.ok && profileData.profile) {
+          setChatPartnerAvatar(profileData.profile.avatar);
+          setChatPartner(profileData.profile);
+        } else {
+          // Fallback: Verwende Placeholder-Avatar
           setChatPartnerAvatar(`https://via.placeholder.com/150/4F46E5/FFFFFF?text=${partnerUser.name.charAt(0)}`);
         }
-      } else {
+      } catch (e) {
+        console.error('Fehler beim Laden des Partner-Profils:', e);
         setChatPartnerAvatar(`https://via.placeholder.com/150/4F46E5/FFFFFF?text=${partnerUser.name.charAt(0)}`);
       }
     }
