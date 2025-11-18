@@ -56,7 +56,7 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const loadChatPartner = () => {
+  const loadChatPartner = async () => {
     if (typeof window === 'undefined' || !user) return;
 
     // Lade alle registrierten User, um den Namen zu finden

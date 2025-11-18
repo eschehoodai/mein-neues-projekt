@@ -41,7 +41,7 @@ export default function NachrichtenPage() {
     loadChats();
   }, [user]);
 
-  const loadChats = () => {
+  const loadChats = async () => {
     if (!user || typeof window === 'undefined') return;
 
     // Lade alle registrierten User
