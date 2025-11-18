@@ -15,7 +15,7 @@ export default function Registrierungsformular() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess(false);
@@ -31,41 +31,54 @@ export default function Registrierungsformular() {
       return;
     }
 
-    // Lade bestehende Benutzer
-    const existingUsers = typeof window !== 'undefined'
-      ? JSON.parse(localStorage.getItem('registeredUsers') || '[]')
-      : [];
-
-    // Prüfe ob E-Mail bereits existiert
-    if (existingUsers.some((u: { email: string }) => u.email === formData.email)) {
-      setError('Diese E-Mail ist bereits registriert.');
+    if (typeof window === 'undefined') {
+      setError('Registrierung ist nur im Browser möglich.');
       return;
     }
 
-    // Erstelle eindeutige User-Kennung (UUID-ähnlich)
-    const generateUserId = () => {
-      return 'user-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
-    };
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+        }),
+      });
 
-    // Erstelle neuen Benutzer mit eindeutiger User-Kennung
-    const newUser = {
-      id: generateUserId(),
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      role: formData.role,
-    };
+      // Prüfe ob die Antwort JSON ist
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Unerwartete Antwort:', text.substring(0, 200));
+        setError('Server-Fehler: Die API-Route antwortet nicht korrekt. Bitte prüfe die Konsole.');
+        return;
+      }
 
-    // Speichere Benutzer
-    const updatedUsers = [...existingUsers, newUser];
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers));
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Fehler bei der Registrierung');
+        return;
+      }
+
+      console.log('User erfolgreich registriert:', data.user);
+      setSuccess(true);
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
+    } catch (error) {
+      console.error('Registrierungsfehler:', error);
+      if (error instanceof SyntaxError) {
+        setError('Server-Fehler: Ungültige Antwort vom Server. Bitte prüfe ob die API-Route funktioniert.');
+      } else {
+        setError('Fehler bei der Registrierung. Bitte versuche es erneut.');
+      }
     }
-
-    setSuccess(true);
-    setTimeout(() => {
-      router.push('/login');
-    }, 2000);
   };
 
   return (

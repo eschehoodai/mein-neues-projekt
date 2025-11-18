@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { initializeSampleUsers } from '../utils/sampleUsers';
 
 type UserRole = 'user' | 'admin' | null;
 
@@ -14,102 +13,74 @@ type User = {
 
 type AuthContextType = {
   user: User | null;
-  login: (email: string, password: string, role: 'user' | 'admin') => boolean;
+  login: (email: string, password: string, role: 'user' | 'admin') => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  loading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initialisiere Sample User Accounts und lade User
+    // Lade gespeicherten User aus LocalStorage (Session)
     if (typeof window !== 'undefined') {
-      // Stelle sicher, dass Sample Users initialisiert sind
-      initializeSampleUsers();
-      
-      // Lade gespeicherten User aus LocalStorage
       const savedUser = localStorage.getItem('currentUser');
       if (savedUser) {
         try {
           const parsedUser = JSON.parse(savedUser);
-          
-          // Verifiziere, dass der User noch in registeredUsers existiert
-          const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-          const userStillExists = registeredUsers.some((u: { id: string }) => u.id === parsedUser.id);
-          
-          if (userStillExists) {
-            setUser(parsedUser);
-            console.log('User aus LocalStorage geladen:', parsedUser);
-          } else {
-            // User existiert nicht mehr, entferne aus currentUser
-            localStorage.removeItem('currentUser');
-            console.log('Gespeicherter User existiert nicht mehr in registeredUsers');
-          }
+          setUser(parsedUser);
+          console.log('User aus Session geladen:', parsedUser);
         } catch (error) {
           console.error('Fehler beim Laden des Users:', error);
           localStorage.removeItem('currentUser');
         }
       }
+      setLoading(false);
     }
   }, []);
 
-  const login = (email: string, password: string, role: 'user' | 'admin'): boolean => {
+  const login = async (email: string, password: string, role: 'user' | 'admin'): Promise<boolean> => {
     if (typeof window === 'undefined') return false;
     
-    // Stelle sicher, dass Sample Users initialisiert sind
-    initializeSampleUsers();
-    
-    // Lade registrierte Benutzer aus LocalStorage
-    const usersStr = localStorage.getItem('registeredUsers');
-    if (!usersStr) {
-      console.error('Keine registrierten User gefunden im LocalStorage');
-      return false;
-    }
-    
-    let users;
     try {
-      users = JSON.parse(usersStr);
-    } catch (error) {
-      console.error('Fehler beim Parsen der registrierten User:', error);
-      return false;
-    }
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, role }),
+      });
 
-    if (!Array.isArray(users)) {
-      console.error('registeredUsers ist kein Array:', users);
-      return false;
-    }
+      const data = await response.json();
 
-    console.log('Suche nach User:', { email, role, totalUsers: users.length });
-
-    // Suche nach Benutzer
-    const foundUser = users.find(
-      (u: { email: string; password: string; role: UserRole }) => {
-        const emailMatch = u.email.toLowerCase() === email.toLowerCase();
-        const passwordMatch = u.password === password;
-        const roleMatch = u.role === role;
-        return emailMatch && passwordMatch && roleMatch;
+      if (!response.ok) {
+        console.error('Login fehlgeschlagen:', data.error);
+        return false;
       }
-    );
 
-    if (foundUser) {
-      const loggedInUser: User = {
-        id: foundUser.id,
-        email: foundUser.email,
-        name: foundUser.name,
-        role: foundUser.role,
-      };
-      setUser(loggedInUser);
-      localStorage.setItem('currentUser', JSON.stringify(loggedInUser));
-      console.log('Login erfolgreich:', loggedInUser);
-      return true;
+      if (data.user) {
+        const loggedInUser: User = {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+          role: data.user.role,
+        };
+        setUser(loggedInUser);
+        localStorage.setItem('currentUser', JSON.stringify(loggedInUser));
+        console.log('Login erfolgreich:', loggedInUser);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Login-Fehler:', error);
+      return false;
     }
-    
-    console.log('User nicht gefunden. Verfügbare User:', users.map((u: { email: string; role: string }) => ({ email: u.email, role: u.role })));
-    return false;
   };
 
   const logout = () => {
@@ -127,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         isAuthenticated: user !== null,
         isAdmin: user?.role === 'admin',
+        loading,
       }}
     >
       {children}
@@ -141,4 +113,3 @@ export function useAuth() {
   }
   return context;
 }
-

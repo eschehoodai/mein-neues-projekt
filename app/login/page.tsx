@@ -26,11 +26,14 @@ export default function Login() {
     }
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const success = login(email, password, role);
+    // Debug: Zeige was gesucht wird
+    console.log('Login-Versuch:', { email, role, passwordLength: password.length });
+
+    const success = await login(email.trim(), password, role);
     if (success) {
       router.push('/');
     } else {
