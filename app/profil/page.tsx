@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../contexts/AuthContext';
 
 type UserProfile = {
   id: number;
@@ -20,63 +22,50 @@ type UserProfile = {
   seeking: string;
 };
 
-const sampleProfiles: UserProfile[] = [
-  {
-    id: 1,
-    name: "Esche",
-    age: 29,
-    location: "Oberndorf",
-    status: "Online verfügbar",
-    interests: ["Essen", "Kraftsport", "Sport", "Deep Talk", "Moonchild"],
-    height: "196 cm",
-    children: "Keine Kinder",
-    education: "Ausbildung",
-    languages: ["Deutsch"],
-    description: "Bin neu in Stuttgart und auf der Suche nach neuen Freunden mit denen man etwas unternehmen kann 😊 Bin auch Single, also für ein First Date zu haben 😘",
-    avatar: "https://via.placeholder.com/150/4F46E5/FFFFFF?text=Esche",
-    online: true,
-    verified: true,
-    seeking: "Neue Freunde oder Chats, mal sehen was passiert",
-  },
-  {
-    id: 2,
-    name: "Max Mustermann",
-    age: 32,
-    location: "Stuttgart",
-    status: "Online",
-    interests: ["Reisen", "Fotografie", "Kochen"],
-    height: "180 cm",
-    children: "Keine Kinder",
-    education: "Studium",
-    languages: ["Deutsch", "Englisch"],
-    description: "Abenteuerlustiger Entwickler sucht interessante Gespräche und gemeinsame Erlebnisse.",
-    avatar: "https://via.placeholder.com/150/10B981/FFFFFF?text=Max",
-    online: true,
-    verified: true,
-    seeking: "Interessante Gespräche und neue Freunde",
-  },
-  {
-    id: 3,
-    name: "Anna Beispiel",
-    age: 27,
-    location: "München",
-    status: "Offline",
-    interests: ["Yoga", "Lesen", "Natur"],
-    height: "168 cm",
-    children: "Keine Kinder",
-    education: "Studium",
-    languages: ["Deutsch", "Spanisch"],
-    description: "Ruhe suchende Seele, die tiefgründige Gespräche und entspannte Treffen schätzt.",
-    avatar: "https://via.placeholder.com/150/EF4444/FFFFFF?text=Anna",
-    online: false,
-    verified: false,
-    seeking: "Tiefe Gespräche und gemeinsame Entdeckungen",
-  },
-];
-
 export default function Profil() {
+  const router = useRouter();
+  const { isAuthenticated, user } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [profiles, setProfiles] = useState<UserProfile[]>([]);
+  const [userProfileId, setUserProfileId] = useState<number | null>(null);
+
+  useEffect(() => {
+    // Lade Profile aus LocalStorage
+    if (typeof window !== 'undefined') {
+      // Lade userProfiles aus LocalStorage
+      const savedProfiles = localStorage.getItem('userProfiles');
+      if (savedProfiles) {
+        try {
+          const parsedProfiles: (UserProfile & { userId?: string })[] = JSON.parse(savedProfiles);
+          setProfiles(parsedProfiles);
+          
+          // Finde das Profil des eingeloggten Users
+          // Prüfe auch nach Profilen, die möglicherweise zu Sample User Accounts gehören
+          if (user) {
+            const ownProfile = parsedProfiles.find((p: UserProfile & { userId?: string }) => {
+              // Direkte Verknüpfung
+              if (p.userId === user.id) return true;
+              // Für Sample User: Prüfe ob User-ID mit Profil-ID übereinstimmt (sample-1 -> Profil ID 1)
+              if (user.id.startsWith('sample-')) {
+                const sampleId = parseInt(user.id.replace('sample-', ''));
+                return p.id === sampleId;
+              }
+              return false;
+            });
+            if (ownProfile) {
+              setUserProfileId(ownProfile.id);
+            }
+          }
+        } catch (error) {
+          console.error('Fehler beim Laden der Profile:', error);
+          setProfiles([]);
+        }
+      } else {
+        setProfiles([]);
+      }
+    }
+  }, [user]);
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -165,9 +154,45 @@ export default function Profil() {
       </p>
 
       {/* Action Button */}
-      <button className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-xl transition-colors duration-200 border border-cyan-400">
-        Chat starten ⚔️
-      </button>
+      {isAuthenticated ? (
+        userProfileId === profile.id ? (
+          <button
+            disabled
+            className="w-full py-3 bg-gray-600 text-gray-400 font-bold rounded-xl cursor-not-allowed border border-gray-500"
+          >
+            Das ist dein eigenes Profil
+          </button>
+        ) : (
+          (() => {
+            const profileOwner = (profile as UserProfile & { userId?: string }).userId;
+            if (!profileOwner) {
+              return (
+                <button
+                  disabled
+                  className="w-full py-3 bg-gray-600 text-gray-400 font-bold rounded-xl cursor-not-allowed border border-gray-500"
+                >
+                  Profil hat keinen Account
+                </button>
+              );
+            }
+            return (
+              <button
+                onClick={() => router.push(`/chat/${profileOwner}`)}
+                className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-xl transition-colors duration-200 border border-cyan-400"
+              >
+                Chat starten ⚔️
+              </button>
+            );
+          })()
+        )
+      ) : (
+        <button
+          onClick={() => router.push('/registrierung')}
+          className="w-full py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-xl transition-colors duration-200 border border-gray-500"
+        >
+          Registriere dich um zu chatten
+        </button>
+      )}
     </div>
   );
 
@@ -203,7 +228,7 @@ export default function Profil() {
 
           {/* Profilkarten Grid */}
           <div className="grid md:grid-cols-2 gap-6">
-            {sampleProfiles.map((profile) => (
+            {profiles.map((profile) => (
               <ProfileCard key={profile.id} profile={profile} />
             ))}
           </div>
