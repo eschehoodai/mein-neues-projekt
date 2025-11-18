@@ -4,10 +4,10 @@ import { supabase } from '../../../../lib/supabase';
 // GET - Lade Profil eines bestimmten Users
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
 
     const { data: profile, error } = await supabase
       .from('user_profiles')
