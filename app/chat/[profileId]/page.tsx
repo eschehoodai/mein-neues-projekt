@@ -283,7 +283,7 @@ export default function ChatPage() {
                 disabled={!newMessage.trim()}
                 className="px-6 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors"
               >
-                Senden ⚔️
+                Senden ❤️
               </button>
             </div>
           </div>

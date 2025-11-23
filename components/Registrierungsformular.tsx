@@ -196,7 +196,7 @@ export default function Registrierungsformular() {
           disabled={success}
           className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors duration-200 border border-cyan-400"
         >
-          Registrieren ⚔️
+          Registrieren ❤️
         </button>
       </form>
 

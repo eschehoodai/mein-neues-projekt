@@ -484,7 +484,7 @@ export default function ProfilErstellen() {
                   type="submit"
                   className="w-full py-4 bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xl rounded-xl transition-colors duration-200 border border-cyan-400"
                 >
-                  Profil erstellen ⚔️
+                  Profil erstellen ❤️
                 </button>
               </div>
             </div>
@@ -492,16 +492,6 @@ export default function ProfilErstellen() {
             </>
           )}
 
-          {/* Play/Pause Button */}
-          <div className="text-center mt-8">
-            <button
-              onClick={togglePlay}
-              className="px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xl rounded-full shadow-2xl transition-all duration-300 flex items-center gap-3 mx-auto"
-            >
-              {isPlaying ? '⏸ Pause' : '▶ Play'}
-              <span className="text-2xl">⚔️</span>
-            </button>
-          </div>
         </div>
       </main>
     </div>

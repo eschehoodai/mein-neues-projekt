@@ -42,16 +42,6 @@ export default function Registrierung() {
           <Registrierungsformular />
         </div>
 
-        {/* Play/Pause Button */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-          <button
-            onClick={togglePlay}
-            className="px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xl rounded-full shadow-2xl transition-all duration-300 flex items-center gap-3"
-          >
-            {isPlaying ? '⏸ Pause' : '▶ Play'}
-            <span className="text-2xl">⚔️</span>
-          </button>
-        </div>
       </main>
     </div>
   );

@@ -15,7 +15,7 @@ export default function Navigation() {
         <div className="flex justify-between items-center h-16">
           {/* Logo/Brand */}
           <div className="text-xl font-bold text-cyan-400">
-            ⚔️ Mein Projekt
+            ❤️ NEXT DATING
           </div>
 
           {/* Navigation Links */}

@@ -470,7 +470,7 @@ export default function Home() {
           // Eingeloggte User - Willkommensnachricht
           <div className="w-full max-w-4xl mx-auto text-center">
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 drop-shadow-2xl">
-              Willkommen zurück! ⚔️
+              Willkommen zurück! ❤️
             </h1>
             <p className="text-xl md:text-2xl text-cyan-300 font-light drop-shadow-lg mb-8">
               Entdecke neue Profile und starte spannende Gespräche
@@ -496,10 +496,10 @@ export default function Home() {
             {/* Hero-Bereich */}
             <div className="text-center mb-16">
               <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 drop-shadow-2xl">
-                Finde jemanden, bei dem es sofort klickt.
+                Wenn sich zwei Seelen finden, nennen wir es Match.
               </h1>
               <p className="text-2xl md:text-3xl text-cyan-300 font-light mb-8 drop-shadow-lg">
-                Die Dating-App, auf der täglich neue Lieben entstehen.
+                Dein Herz weiß schon, wen es will. Wir helfen nur nach.
               </p>
               <p className="text-xl text-white mb-8">
                 Jetzt kostenlos starten – in 60 Sekunden bist du dabei ❤️
@@ -510,7 +510,7 @@ export default function Home() {
                 onClick={() => router.push('/registrierung')}
                 className="px-12 py-6 bg-gradient-to-r from-pink-600 via-red-500 to-pink-600 text-white font-bold text-2xl rounded-full shadow-2xl transition-all duration-300 hover:scale-105 animate-pulse hover:animate-none"
               >
-                JETZT BEITRETEN UND REGISTRIEREN ⚔️
+                JETZT BEITRETEN UND REGISTRIEREN ❤️
               </button>
             </div>
 
@@ -576,18 +576,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* PLAY/PAUSE BUTTON - Nur für nicht eingeloggte User */}
-        {!isAuthenticated && !isAdmin && (
-          <div className="mt-8">
-            <button
-              onClick={togglePlay}
-              className="px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xl rounded-full shadow-2xl transition-all duration-300 flex items-center gap-3 mx-auto"
-            >
-              {isPlaying ? '⏸ Pause' : '▶ Play'}
-              <span className="text-2xl">⚔️</span>
-            </button>
-          </div>
-        )}
       </main>
     </div>
   );

@@ -177,7 +177,7 @@ export default function Profil() {
                 onClick={() => router.push(`/chat/${profileOwner}`)}
                 className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-xl transition-colors duration-200 border border-cyan-400"
               >
-                Chat starten ⚔️
+                Chat starten ❤️
               </button>
             );
           })()
@@ -230,16 +230,6 @@ export default function Profil() {
             ))}
           </div>
 
-          {/* Play/Pause Button */}
-          <div className="text-center mt-12">
-            <button
-              onClick={togglePlay}
-              className="px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xl rounded-full shadow-2xl transition-all duration-300 flex items-center gap-3 mx-auto"
-            >
-              {isPlaying ? '⏸ Pause' : '▶ Play'}
-              <span className="text-2xl">⚔️</span>
-            </button>
-          </div>
         </div>
       </main>
     </div>
